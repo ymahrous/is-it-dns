@@ -2,8 +2,8 @@
 
 > A free, interactive troubleshooting flowchart for engineers on call. Every one of its 22 paths ends in a real DNS failure, with the dig output that proves it, the root cause and the fix.
 
-Site: https://YOUR-USERNAME.github.io/is-it-dns/
-Author: YOUR-NAME (https://github.com/YOUR-USERNAME)
+Site: https://ymahrous.github.io/is-it-dns/
+Author: Yousef Mahrous (https://github.com/ymahrous)
 Updated: 2026-09-25
 
 ## How to check if it's DNS

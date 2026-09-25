@@ -1,13 +1,13 @@
 # Is It DNS?
 
-[![Is it still DNS?](https://github.com/YOUR-USERNAME/is-it-dns/actions/workflows/check.yml/badge.svg)](https://github.com/YOUR-USERNAME/is-it-dns/actions/workflows/check.yml)
+[![Is it still DNS?](https://github.com/ymahrous/is-it-dns/actions/workflows/check.yml/badge.svg)](https://github.com/ymahrous/is-it-dns/actions/workflows/check.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-172033.svg)](LICENSE)
 [![Confidence](https://img.shields.io/badge/confidence-100%25-D2362B.svg)](#)
 [![Days since it was DNS](https://img.shields.io/badge/days%20since%20it%20was%20DNS-0-F5C518.svg)](#)
 
 **A rigorous, peer-reviewed troubleshooting flowchart. Every path ends in DNS.**
 
-[**Try it →**](https://YOUR-USERNAME.github.io/is-it-dns/)
+[**Try it →**](https://ymahrous.github.io/is-it-dns/)
 
 ![Is it DNS? A red stamp reads: It's DNS.](og.png)
 
@@ -35,25 +35,12 @@ Each ending names a real DNS failure and shows:
 ## Quick start
 
 ```sh
-git clone https://github.com/YOUR-USERNAME/is-it-dns.git
+git clone https://github.com/ymahrous/is-it-dns.git
 cd is-it-dns
 open index.html        # or xdg-open, or just double-click it
 ```
 
 That's the whole setup.
-
-## Deploy to GitHub Pages
-
-1. Fork or create a public repo named `is-it-dns` and push these files to its root, including `.nojekyll` and `.github/`.
-2. Fill in your details:
-   ```sh
-   ./configure.sh your-github-username "Your Name"
-   ```
-   This fills in your username and name in the page, metadata, sitemap, crawler files, license and docs. Run it once, then commit and push the result.
-3. In the repo, go to **Settings → Pages**, set **Source** to *Deploy from a branch*, then choose `main` and `/ (root)`.
-4. After a minute or two it's live at `https://your-github-username.github.io/is-it-dns/`.
-
-If it doesn't load right away, give it a few minutes. You know why.
 
 ## Project layout
 
@@ -66,7 +53,6 @@ If it doesn't load right away, give it a few minutes. You know why.
 | `robots.txt`, `sitemap.xml`, `llms.txt` | Instructions and summaries for search engines and AI crawlers |
 | `scripts/check.mjs` | Checks that every path ends in DNS and every copy of the content agrees |
 | `.github/workflows/check.yml` | Runs the check on every push and pull request |
-| `configure.sh` | Fills in your username and name everywhere |
 | `.nojekyll` | Tells GitHub Pages to serve files as they are |
 
 ## How it works
@@ -124,6 +110,6 @@ Accuracy.
 
 ## License
 
-[MIT](LICENSE) © 2026 YOUR-NAME
+[MIT](LICENSE) © 2026 Yousef Mahrous
 
 No warranty is provided, express or implied, including any warranty that it's not DNS.

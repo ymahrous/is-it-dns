@@ -22,4 +22,4 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-Sitemap: https://YOUR-USERNAME.github.io/is-it-dns/sitemap.xml
+Sitemap: https://ymahrous.github.io/is-it-dns/sitemap.xml
