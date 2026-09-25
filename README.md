@@ -2,8 +2,6 @@
 
 [![Is it still DNS?](https://github.com/ymahrous/is-it-dns/actions/workflows/check.yml/badge.svg)](https://github.com/ymahrous/is-it-dns/actions/workflows/check.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-172033.svg)](LICENSE)
-[![Confidence](https://img.shields.io/badge/confidence-100%25-D2362B.svg)](#)
-[![Days since it was DNS](https://img.shields.io/badge/days%20since%20it%20was%20DNS-0-F5C518.svg)](#)
 
 **A rigorous, peer-reviewed troubleshooting flowchart. Every path ends in DNS.**
 
@@ -111,6 +109,6 @@ Accuracy.
 
 ## License
 
-[MIT](LICENSE) © 2026 Yousef Mahrous
+[MIT](LICENSE).
 
 No warranty is provided, express or implied, including any warranty that it's not DNS.
