@@ -1,0 +1,13 @@
+{
+  "name": "Is It DNS?",
+  "short_name": "Is It DNS?",
+  "description": "A troubleshooting flowchart where every path ends in DNS.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#EDF0F4",
+  "theme_color": "#F5C518",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

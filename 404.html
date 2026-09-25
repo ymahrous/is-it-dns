@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NXDOMAIN · Is It DNS?</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/is-it-dns/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@50..150,900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--paper:#EDF0F4;--ink:#172033;--ink-2:#4A5570;--stamp:#D2362B;--term:#172033;--term-ink:#D9E2F2;--hi:#F5C518}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--paper:#0F1522;--ink:#E6EBF5;--ink-2:#9AA6C0;--stamp:#FF5A4B;--term:#0A0F19}}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 20px;background:var(--paper);color:var(--ink);font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+main{max-width:640px;display:flex;flex-direction:column;gap:20px}
+h1{font-family:"Anybody",Impact,sans-serif;font-weight:900;font-stretch:60%;font-size:clamp(64px,14vw,120px);line-height:.85;margin:0;color:var(--stamp)}
+pre{background:var(--term);color:var(--term-ink);padding:16px 18px;overflow-x:auto;margin:0;font-size:13px;line-height:1.6}
+pre b{color:var(--hi)}
+a{color:var(--ink);text-decoration-color:var(--stamp);text-underline-offset:3px;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1>NXDOMAIN</h1>
+  <pre>$ dig this-page
+;; ->>HEADER<<- opcode: QUERY, <b>status: NXDOMAIN</b>
+;; This page does not exist. Yes, it was DNS.</pre>
+  <p><a href="/is-it-dns/">Back to the flowchart</a></p>
+</main>
+</body>
+</html>
