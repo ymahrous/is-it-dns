@@ -15,7 +15,7 @@
 
 Is It DNS? is an interactive troubleshooting flowchart for engineers on call. Pick a symptom, answer a few questions, and it concludes that the cause is DNS.
 
-It has 22 paths, and all 22 of them end in DNS. This isn't a bug. It's the finding.
+It has 34 paths, and all 34 of them end in DNS. This isn't a bug. It's the finding.
 
 Each ending names a real DNS failure and shows:
 
@@ -26,7 +26,7 @@ Each ending names a real DNS failure and shows:
 
 ### Features
 
-- 12 real failures, including stale A records, 86400-second TTLs, CNAMEs at the zone apex, SPF's 10-lookup limit, MX records pointing at CNAMEs, CoreDNS running out of memory, Kubernetes `ndots:5`, negative caching, and that `/etc/hosts` entry from 2019
+- 21 real failures, including stale A records, 86400-second TTLs, expired DNSSEC signatures, lame delegations, SPF's 10-lookup limit, missing PTR records, CAA records that block certificate renewal, CoreDNS forwarding loops, NetworkPolicies that block port 53, the Kubernetes 5-second conntrack race, `ndots:5`, and that `/etc/hosts` entry from 2019
 - A plain-text reference section (a five-step "is it DNS?" check, plus every failure explained with RFC citations) that's useful after the laughing stops
 - Keyboard shortcuts: press `1`–`9` to answer
 - Light and dark mode, and works at phone width
@@ -54,6 +54,7 @@ That's the whole setup.
 | `scripts/check.mjs` | Checks that every path ends in DNS and every copy of the content agrees |
 | `.github/workflows/check.yml` | Runs the check on every push and pull request |
 | `.nojekyll` | Tells GitHub Pages to serve files as they are |
+| `AGENTS.md`, `CLAUDE.md` | Guidance for coding agents working on the repo |
 
 ## How it works
 
@@ -68,7 +69,7 @@ To check everything yourself:
 
 ```sh
 node scripts/check.mjs
-# ✓ 12 questions, 13 verdicts, 22 paths, 12 cause cards, 15 FAQ entries. All paths end in DNS.
+# ✓ 17 questions, 22 verdicts, 34 paths, 21 cause cards, 24 FAQ entries. All paths end in DNS.
 ```
 
 ## Search engines and AI assistants

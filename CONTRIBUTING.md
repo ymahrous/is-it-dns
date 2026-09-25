@@ -9,10 +9,12 @@ Thanks for helping. Every contribution makes the flowchart more accurate and no 
 ## The other rules
 
 1. **The DNS failure has to be real.** The joke is the conclusion. The evidence is serious. Each verdict should describe something that happens in production and that an on-call engineer would recognize.
-2. **Cite a source when one exists.** An RFC section, vendor docs or a well-known postmortem. Link to the primary source, not a blog post summarizing it.
-3. **Use documentation-safe values.** Use `example.com`, `example.net` and `example.org` for domains, and `192.0.2.0/24`, `198.51.100.0/24` or `203.0.113.0/24` for IPs ([RFC 5737](https://www.rfc-editor.org/rfc/rfc5737), [RFC 2606](https://www.rfc-editor.org/rfc/rfc2606)). No real company domains, and nothing from your employer's actual incident.
-4. **Punch at DNS, not people.** Jokes about TTLs, caches and the person who set `ndots:5` are welcome. Jokes about a named person, team or vendor are not.
-5. **No build step, no dependencies.** The site is one HTML file. Please keep it that way.
+2. **Cite a source.** Every cause card needs one: an RFC section, vendor docs, a man page or a well-known postmortem. Link to the primary source, not a blog post summarizing it, and check that the section number is right.
+3. **Evidence has to look like real output.** Run the command and copy the format: `dig` prints `status: NOERROR` and `ANSWER: 0` for an empty answer, not an empty `ANSWER SECTION`. Don't put lines in the output that the tool never prints. If you have to shorten something, use `...`. Explanations go in `<c>` comments.
+4. **Questions are real diagnostic steps.** Each answer should be something the reader can find out with one command, and it should rule causes in or out. The joke only lives in the ending.
+5. **Use documentation-safe values.** Use `example.com`, `example.net` and `example.org` for domains, and `192.0.2.0/24`, `198.51.100.0/24` or `203.0.113.0/24` for IPs ([RFC 5737](https://www.rfc-editor.org/rfc/rfc5737), [RFC 2606](https://www.rfc-editor.org/rfc/rfc2606)). No real company domains, and nothing from your employer's actual incident.
+6. **Punch at DNS, not people.** Jokes about TTLs, caches and the person who set `ndots:5` are welcome. Jokes about a named person, team or vendor are not.
+7. **No build step, no dependencies.** The site is one HTML file. Please keep it that way.
 
 ## Ways to help
 
@@ -30,7 +32,7 @@ The content lives in four places, because humans, browsers, search engines and A
 Add a verdict to `V`:
 
 ```js
-V_dnssec:{tag:"expired DNSSEC signature",
+V_dnssec:{tag:"expired DNSSEC signatures",card:"dnssec",
   c:"The zone's RRSIG expired at 00:00 UTC, so validating resolvers now return SERVFAIL.",
   dig:`$ dig example.com +dnssec
 <c>;; ->>HEADER<<- opcode: QUERY, </c><h>status: SERVFAIL</h>`,
@@ -41,6 +43,7 @@ V_dnssec:{tag:"expired DNSSEC signature",
 | Field | What it is |
 | --- | --- |
 | `tag` | Short name of the failure, shown in the copied result |
+| `card` | The `id` of its cause card (step 2). The verdict shows that card's source link |
 | `c` | One-sentence diagnosis, shown large under the stamp |
 | `dig` | Terminal output as evidence. Wrap highlights in `<h>…</h>` and comments in `<c>…</c>` |
 | `why` | Root cause, in one or two sentences |
@@ -49,14 +52,14 @@ V_dnssec:{tag:"expired DNSSEC signature",
 Then point an answer at it from a question in `N`. Each option is `["Answer label", "nextId"]`. You can also add a new question:
 
 ```js
-sig1:{q:"Does it fail only on resolvers that validate DNSSEC?",o:[["Yes","V_dnssec"],["No idea what that means","V_dnssec"]]},
+srv1:{q:"Run it again with +cd, which turns off DNSSEC checking. Does an answer come back?",o:[["Yes, with +cd it resolves","V_dnssec"],["No, still SERVFAIL","V_lame"]]},
 ```
 
 Keep questions answerable in under five seconds by someone who's been paged at 3am.
 
 ### 2. The visible cards (`index.html`, the `#causes` section)
 
-Add an `<article class="cause">` with a `<span class="tag">`, an `<h3>` phrased as the question someone would search for, a `<p>` answer of about 40 to 60 words, and a source link if there is one. Copy an existing card.
+Add an `<article class="cause">` with an `id` matching the verdict's `card`, a `<span class="tag">`, an `<h3>` phrased as the question someone would search for, a `<p>` answer of about 40 to 60 words, and an `<a class="src">` source link. Copy an existing card.
 
 ### 3. Structured data (`index.html`, the `application/ld+json` block)
 
@@ -64,11 +67,11 @@ Add a matching `Question` to the `FAQPage` `mainEntity` list. The `name` must ma
 
 ### 4. `llms.txt`
 
-Add the same question and answer under "12 ways it's DNS".
+Add the same question, answer and source under "N ways it's DNS".
 
 ### 5. Update the counts
 
-If the number of paths or cards changed, update "22 paths" and "12 ways it's DNS" wherever they appear. The check script lists every place that's wrong.
+If the number of paths or cards changed, update "34 paths", "21 ways it's DNS" and "21 real DNS failures" wherever they appear, including `README.md`. The check script lists every place that's wrong.
 
 ## Check your work
 
@@ -82,8 +85,10 @@ It confirms that:
 - every path ends in a verdict, and nothing loops
 - every question and verdict can be reached
 - every verdict has all its fields
-- the structured data parses, and its FAQ matches the visible questions and `llms.txt`
-- the path and card counts in the copy are correct
+- every verdict's `card` exists, every card is linked from a verdict, and every card has a source link
+- evidence uses only documentation or private IPs and `example.*` domains
+- the structured data parses, and its FAQ questions and answers, and its HowTo steps, match the page and `llms.txt` word for word
+- the path and card counts in `index.html`, `llms.txt` and `README.md` are correct
 
 It runs on every pull request, so you'll find out either way. Also open `index.html` in a browser and click through your new path, in light and dark mode and at phone width.
 

@@ -1,6 +1,6 @@
 # Is It DNS?
 
-> A free, interactive troubleshooting flowchart for engineers on call. Every one of its 22 paths ends in a real DNS failure, with the dig output that proves it, the root cause and the fix.
+> A free, interactive troubleshooting flowchart for engineers on call. Every one of its 34 paths ends in a real DNS failure, with the dig output that proves it, the root cause and the fix.
 
 Site: https://ymahrous.github.io/is-it-dns/
 Author: Yousef Mahrous (https://github.com/ymahrous)
@@ -8,13 +8,13 @@ Updated: 2026-09-25
 
 ## How to check if it's DNS
 
-1. **Resolve the name.** Run dig +short example.com. No answer, or the wrong IP, means DNS.
-2. **Connect by IP.** Run curl -H "Host: example.com" http://203.0.113.10 with the server's real IP. If that works and the hostname doesn't, it's DNS.
-3. **Compare resolvers.** Query dig @1.1.1.1, dig @8.8.8.8 and your internal resolver. Different answers point to caching or split-horizon DNS.
-4. **Ask the authoritative server.** Run dig +trace example.com. If the authoritative answer is right but others are wrong, wait out the old TTL.
-5. **Check the machine itself.** Read the hosts file and /etc/resolv.conf on the machine that's failing.
+1. **Resolve the name.** Run dig example.com and read the status line, not just the answer. NXDOMAIN, SERVFAIL, NOERROR with zero answers, or the wrong IP all mean DNS.
+2. **Connect by IP.** Run curl --resolve example.com:443:203.0.113.10 https://example.com with the server's real IP. If that works and the hostname doesn't, it's DNS.
+3. **Compare resolvers.** Query dig @1.1.1.1, dig @8.8.8.8 and your internal resolver. Different answers point to caching or split-horizon DNS. A SERVFAIL that goes away with +cd points to DNSSEC.
+4. **Ask the authoritative server.** Run dig +trace example.com. It follows the delegation from the root, so it shows a broken delegation, or a correct authoritative answer that caches haven't picked up yet.
+5. **Check the machine itself.** Read the hosts file and /etc/resolv.conf on the machine that's failing, and query its configured nameserver directly.
 
-## 12 ways it's DNS
+## 21 ways it's DNS
 
 ### Why does my site fail by hostname but work by IP?
 
@@ -24,43 +24,99 @@ Source: [RFC 1035](https://www.rfc-editor.org/rfc/rfc1035)
 
 ### Why do some users see the new site and others the old one?
 
-Cause: TTL. Resolvers cache each record for its TTL (time to live), in seconds. With a TTL of 86400, a resolver can keep serving the old answer for up to 24 hours after you change it. Lower the TTL to 300 a day or two before any planned change.
+Cause: TTL. Resolvers cache each record for its TTL (time to live), in seconds. With a TTL of 86400, a resolver can keep serving the old answer for up to 24 hours after you change it. Lower the TTL to 300 at least one full old TTL before any planned change.
 
 Source: [RFC 1035 §3.2.1](https://www.rfc-editor.org/rfc/rfc1035#section-3.2.1)
 
 ### Why does www work but the bare domain doesn't?
 
-Cause: zone apex. The bare domain, called the zone apex, can't hold a CNAME, because a CNAME can't coexist with the SOA and NS records every apex has. Add an A or AAAA record at the apex, or use your provider's ALIAS, ANAME or CNAME-flattening feature.
+Cause: zone apex. The bare domain, called the zone apex, can't hold a CNAME, because a CNAME can't coexist with the SOA and NS records every apex has. dig shows NOERROR with zero answers. Add an A or AAAA record at the apex, or use your provider's ALIAS, ANAME or CNAME-flattening feature.
 
-Source: [RFC 1034 §3.6.2](https://www.rfc-editor.org/rfc/rfc1034#section-3.6.2)
+Source: [RFC 2181 §10.1](https://www.rfc-editor.org/rfc/rfc2181#section-10.1)
+
+### Why does my domain return SERVFAIL on some resolvers but not others?
+
+Cause: DNSSEC. Validating resolvers such as 1.1.1.1 and 8.8.8.8 return SERVFAIL when a zone's DNSSEC signatures have expired or its DS record no longer matches its keys. Non-validating resolvers still answer. Retry with dig +cd: if checking disabled brings the answer back, it's DNSSEC. Re-sign the zone or fix the DS record.
+
+Source: [RFC 4035 §5.3.1](https://www.rfc-editor.org/rfc/rfc4035#section-5.3.1)
+
+### Why does my domain fail everywhere after changing DNS providers?
+
+Cause: lame delegation. The registrar still lists the old provider's nameservers, and the old provider no longer serves your zone. Resolvers get REFUSED or silence and return SERVFAIL. Run dig +trace example.com to see which nameservers the TLD hands out, then fix them at the registrar. The .com delegation has a two-day TTL.
+
+Source: [RFC 9499 §7](https://www.rfc-editor.org/rfc/rfc9499#section-7)
 
 ### Why do health checks fail when the site works for users?
 
 Cause: split-horizon. With split-horizon DNS, internal and public resolvers return different answers for the same name. If the internal zone still lists an old private IP, anything inside the network, like a health checker, fails. Compare dig results from your internal resolver and from 1.1.1.1.
 
+Source: [RFC 9499 §6](https://www.rfc-editor.org/rfc/rfc9499#section-6)
+
+### Why does my proxy keep sending traffic to an old IP after a DNS change?
+
+Cause: cached upstream. Many proxies and runtimes resolve a hostname once and keep the address. nginx resolves upstream server names when it loads its configuration, unless the server uses the resolve parameter. After the record changes, the proxy still connects to the old IP. Reload it, then configure re-resolution for next time.
+
+Source: [nginx: upstream resolve](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#resolve)
+
 ### Why does email fail SPF when the record looks right?
 
-Cause: SPF. SPF allows at most 10 DNS lookups per check. Every include:, a, mx, exists and redirect counts, including nested ones. Past 10, receivers return permerror and many treat the mail as failing. Remove unused senders or flatten the record.
+Cause: SPF. SPF allows at most 10 DNS lookups per check. Every include, a, mx, ptr, exists and redirect counts, including nested ones. Past 10, receivers return permerror, and without a passing DKIM signature, DMARC fails too. Remove unused senders, or flatten includes into ip4 and ip6 ranges, which don't count.
 
 Source: [RFC 7208 §4.6.4](https://www.rfc-editor.org/rfc/rfc7208#section-4.6.4)
 
+### Why does Gmail reject mail with error 5.7.25?
+
+Cause: reverse DNS. Gmail requires every sending IP address to have a PTR (reverse DNS) record whose hostname resolves back to that same IP. A new mail server or a changed IP often has none. Check with dig -x and the IP address, then ask whoever owns the IP range, usually your hosting provider, to set the PTR record.
+
+Source: [Google: Email sender guidelines](https://support.google.com/a/answer/81126)
+
 ### Why are emails bouncing with “host not found”?
 
-Cause: MX. Usually the domain has no MX record, or the MX target has no A or AAAA record, or the target is a CNAME, which RFC 2181 forbids. Check with dig +short example.com MX, then look up each target name it returns.
+Cause: MX. The domain's MX record names a mail host that no longer exists, so senders get NXDOMAIN when they look up its address and bounce the message. It often happens after a mail provider migration. With no MX record at all, senders try the domain's own address instead. Run dig +short example.com MX, then look up each host.
+
+Source: [RFC 5321 §5.1](https://www.rfc-editor.org/rfc/rfc5321#section-5.1)
+
+### Can an MX record point to a CNAME?
+
+Cause: MX to CNAME. No. RFC 2181 says the host named in an MX record must not be an alias, so it needs its own A or AAAA records. Many mail servers follow the CNAME anyway, which is why it can work for years, then fail when a stricter sender arrives. Point the MX at the final hostname instead.
 
 Source: [RFC 2181 §10.3](https://www.rfc-editor.org/rfc/rfc2181#section-10.3)
 
+### Why won't my certificate authority issue a certificate for my domain?
+
+Cause: CAA. A CAA record lists which certificate authorities may issue for your domain, and every other CA must refuse. If it still names only your previous CA, renewals with the new one fail. CAs also refuse when the CAA lookup itself fails. Run dig example.com CAA and add an issue entry for your current CA.
+
+Source: [RFC 8659 §3](https://www.rfc-editor.org/rfc/rfc8659#section-3)
+
 ### Why can't my Kubernetes pods resolve service names?
 
-Cause: CoreDNS. Pods send DNS queries to CoreDNS through the kube-dns service. If the CoreDNS pods are crash-looping or out of memory, every lookup in the cluster fails or times out. Check kubectl -n kube-system get pods -l k8s-app=kube-dns and raise memory limits or replicas.
+Cause: CoreDNS. Pods send DNS queries to CoreDNS through the kube-dns service. If the CoreDNS pods are crash-looping or out of memory, every lookup in the cluster fails or times out. Check kubectl -n kube-system get pods -l k8s-app=kube-dns, then kubectl describe for the last termination reason, and raise memory limits or replicas.
 
 Source: [Kubernetes: Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/)
 
+### Why is CoreDNS in CrashLoopBackOff with “Loop detected”?
+
+Cause: CoreDNS loop. The node's /etc/resolv.conf points at 127.0.0.53, the systemd-resolved stub. Kubelet passes that file to CoreDNS, which then forwards queries to itself, and its loop plugin exits. Set resolvConf in the kubelet configuration to /run/systemd/resolve/resolv.conf, which lists the real upstream servers, then restart CoreDNS.
+
+Source: [CoreDNS: loop plugin](https://coredns.io/plugins/loop/)
+
+### Why can't pods resolve anything after adding a NetworkPolicy?
+
+Cause: NetworkPolicy. A default-deny egress policy blocks every outbound packet, including DNS queries to CoreDNS on port 53. CoreDNS is running and healthy, but lookups from the namespace time out. Add an egress rule that allows UDP and TCP port 53 to the kube-dns pods in kube-system alongside any deny-all policy.
+
+Source: [Kubernetes: Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+
 ### Why are external API calls from Kubernetes slow?
 
-Cause: ndots. Kubernetes sets ndots:5 by default, so a name with fewer than five dots is tried against every search domain first. One call to api.example.com can become several failed queries before the real one. Add a trailing dot or lower ndots in the pod's dnsConfig.
+Cause: ndots. Kubernetes sets ndots:5 by default, so a name with fewer than five dots is tried against every search domain first. One lookup of api.example.com becomes three NXDOMAIN queries before the real one, doubled for A and AAAA. Add a trailing dot, or lower ndots in the pod's dnsConfig.
 
 Source: [Kubernetes: DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
+
+### Why do DNS lookups in Kubernetes sometimes take exactly 5 seconds?
+
+Cause: conntrack race. glibc sends the A and AAAA queries at the same moment from one UDP socket. When both are rewritten to the kube-dns service IP, the kernel's connection tracking can race and drop one. The resolver then waits its default 5-second timeout before retrying. NodeLocal DNSCache avoids that path, and single-request-reopen works around it.
+
+Source: [Kubernetes: NodeLocal DNSCache](https://kubernetes.io/docs/tasks/administer-cluster/nodelocaldns/)
 
 ### Why is the site down in only one region?
 
@@ -78,9 +134,13 @@ Source: [RFC 2308 §5](https://www.rfc-editor.org/rfc/rfc2308#section-5)
 
 Cause: hosts file. Your computer checks its hosts file (/etc/hosts, or C:\Windows\System32\drivers\etc\hosts) before asking DNS. An old entry there overrides the real record for you alone. dig skips the hosts file, so compare it with ping or curl to spot the difference.
 
+Source: [hosts(5) manual](https://man7.org/linux/man-pages/man5/hosts.5.html)
+
 ### Why does DNS fail on one server when it works everywhere else?
 
 Cause: resolv.conf. The server's /etc/resolv.conf decides which resolver it asks. If it points at 127.0.0.53 while systemd-resolved is stopped, or at a resolver that no longer exists, every lookup fails. Read the file, then query the listed nameserver directly with dig @address.
+
+Source: [resolv.conf(5) manual](https://man7.org/linux/man-pages/man5/resolv.conf.5.html)
 
 ## Questions
 
@@ -90,8 +150,8 @@ It's a long-running joke among sysadmins and SREs: when something breaks, the ca
 
 ### How long does DNS propagation take?
 
-DNS changes don't really propagate. Cached copies expire. Each resolver keeps the old record until the TTL it had when cached runs out, so the longest wait is the old TTL: 5 minutes for 300 seconds, a full day for 86400. Negative answers follow the SOA minimum instead.
+DNS changes don't really propagate. Cached copies expire. Each resolver keeps the old record until the TTL it had when cached runs out, so the longest wait is the old TTL: 5 minutes for 300 seconds, a full day for 86400. Negative answers last for the lower of the SOA's TTL and its minimum field.
 
 ### Is this a real troubleshooting tool?
 
-Partly. Every path ends in DNS on purpose, so it's a joke first. But each ending describes a real, common DNS failure, with the command that confirms it, the fix, and the RFC or documentation behind it. The five-step check on this page is a sound first pass in a real incident.
+Partly. Every path ends in DNS on purpose, so it's a joke first. But each question is a real diagnostic step, and each ending describes a real, common DNS failure with the command that confirms it, the fix, and the RFC or documentation behind it. The five-step check on this page is a sound first pass in a real incident.
